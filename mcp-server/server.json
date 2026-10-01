@@ -1,0 +1,46 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.local/proofline-mcp",
+  "description": "Drive a Proofline WhatsApp inbox from Claude, Cursor and other MCP clients.",
+  "version": "0.1.0",
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "proofline-mcp",
+      "version": "0.1.0",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "PROOFLINE_BASE_URL",
+          "description": "Base URL of your Proofline instance, e.g. https://crm.example.com",
+          "isRequired": true,
+          "isSecret": false,
+          "format": "string"
+        },
+        {
+          "name": "PROOFLINE_API_KEY",
+          "description": "Proofline API key (Settings → API keys). Its scopes decide what is allowed.",
+          "isRequired": true,
+          "isSecret": true,
+          "format": "string"
+        },
+        {
+          "name": "PROOFLINE_ENABLE_WRITES",
+          "description": "Set to true to expose contact create/update and message sending. Read-only when unset.",
+          "isRequired": false,
+          "isSecret": false,
+          "format": "string"
+        },
+        {
+          "name": "PROOFLINE_ENABLE_BROADCASTS",
+          "description": "Set to true to expose the mass-broadcast tool. Requires PROOFLINE_ENABLE_WRITES.",
+          "isRequired": false,
+          "isSecret": false,
+          "format": "string"
+        }
+      ]
+    }
+  ]
+}

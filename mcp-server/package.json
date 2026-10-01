@@ -1,0 +1,37 @@
+{
+  "name": "proofline-mcp",
+  "version": "0.1.0",
+  "description": "Model Context Protocol (MCP) server for Proofline — drive the WhatsApp inbox from Claude, Cursor, and other MCP clients.",
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "proofline",
+    "whatsapp",
+    "crm"
+  ],
+  "type": "module",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "bin": {
+    "proofline-mcp": "./dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsc --watch",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.18.0",
+    "zod": "^3.25.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.0",
+    "typescript": "^5.7.0"
+  }
+}
