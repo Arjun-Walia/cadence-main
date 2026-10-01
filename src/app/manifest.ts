@@ -1,11 +1,13 @@
 import type { MetadataRoute } from "next";
 
+import { PROOFLINE_MARK, PROOFLINE_NOTICE } from "@/lib/legal/trademark";
+
 export default function manifest(): MetadataRoute.Manifest {
   return {
     id: "/",
-    name: "Proofline",
-    short_name: "Proofline",
-    description: "Rank open deals and approve who to contact first.",
+    name: PROOFLINE_MARK,
+    short_name: PROOFLINE_MARK,
+    description: `Rank open deals and approve who to contact first. ${PROOFLINE_NOTICE}`,
     start_url: "/decisions",
     scope: "/",
     display: "standalone",

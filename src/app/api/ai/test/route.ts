@@ -2,17 +2,18 @@ import { NextResponse } from 'next/server'
 import { requireRole, toErrorResponse } from '@/lib/auth/account'
 import { checkRateLimit, rateLimitResponse, RATE_LIMITS } from '@/lib/rate-limit'
 import { decrypt } from '@/lib/whatsapp/encryption'
-import { validateAiCredentials } from '@/lib/ai/validate'
+import { listProviderModels } from '@/lib/ai/models'
 import { AiError, isAiProvider } from '@/lib/ai/types'
 
 /**
  * POST /api/ai/test  (admin+)
  *
- * "Test key" button: validate a candidate provider/model/key against
- * the provider WITHOUT saving. When `api_key` is omitted the stored
- * key is used, so an admin can re-test an existing config (e.g. after
- * changing the model). Returns `{ ok: true }` on success, 400 with the
- * provider's message on failure.
+ * Confirm a provider key WITHOUT saving, by loading that provider's
+ * model catalog. A chat ping is the wrong check: it fails when the
+ * form still holds a guessed model this key cannot call. When
+ * `api_key` is omitted the stored key is used, but only if it was
+ * saved for the same provider — a key for OpenAI must not be sent to
+ * Anthropic. Returns `{ ok: true, models: [{ id, label }] }`.
  */
 export async function POST(request: Request) {
   try {
@@ -33,22 +34,17 @@ export async function POST(request: Request) {
         { status: 400 },
       )
     }
-    const model = typeof body.model === 'string' ? body.model.trim() : ''
-    if (!model) {
-      return NextResponse.json({ error: 'model is required' }, { status: 400 })
-    }
-
     const rawKey = typeof body.api_key === 'string' ? body.api_key.trim() : ''
     let apiKeyPlain = rawKey
     if (!apiKeyPlain) {
       const { data: existing } = await supabase
         .from('ai_configs')
-        .select('api_key')
+        .select('provider, api_key')
         .eq('account_id', accountId)
         .maybeSingle()
-      if (!existing?.api_key) {
+      if (!existing?.api_key || existing.provider !== provider) {
         return NextResponse.json(
-          { error: 'Enter an API key to test.' },
+          { error: 'Enter an API key for this provider.' },
           { status: 400 },
         )
       }
@@ -63,17 +59,8 @@ export async function POST(request: Request) {
     }
 
     try {
-      await validateAiCredentials({
-        provider,
-        model,
-        apiKey: apiKeyPlain,
-        systemPrompt: null,
-        isActive: true,
-        autoReplyEnabled: false,
-        autoReplyMaxPerConversation: 3,
-        handoffAgentId: null,
-        embeddingsApiKey: null,
-      })
+      const models = await listProviderModels(provider, apiKeyPlain)
+      return NextResponse.json({ ok: true, models })
     } catch (err) {
       if (err instanceof AiError) {
         return NextResponse.json(
@@ -87,8 +74,6 @@ export async function POST(request: Request) {
         { status: 400 },
       )
     }
-
-    return NextResponse.json({ ok: true })
   } catch (err) {
     return toErrorResponse(err)
   }

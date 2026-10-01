@@ -6,7 +6,7 @@ import {
 } from '@/lib/auth/account'
 import { checkRateLimit, rateLimitResponse, RATE_LIMITS } from '@/lib/rate-limit'
 import { encrypt, decrypt } from '@/lib/whatsapp/encryption'
-import { validateAiCredentials } from '@/lib/ai/validate'
+import { listProviderModels } from '@/lib/ai/models'
 import { embedTexts } from '@/lib/ai/embeddings'
 import { AiError, isAiProvider } from '@/lib/ai/types'
 
@@ -135,7 +135,7 @@ export async function POST(request: Request) {
     let apiKeyPlain: string
     if (rawKey) {
       apiKeyPlain = rawKey
-    } else if (existing?.api_key) {
+    } else if (existing?.api_key && existing.provider === provider) {
       try {
         apiKeyPlain = decrypt(existing.api_key)
       } catch {
@@ -157,17 +157,10 @@ export async function POST(request: Request) {
 
     if (credentialsChanged) {
       try {
-        await validateAiCredentials({
-          provider,
-          model,
-          apiKey: apiKeyPlain,
-          systemPrompt,
-          isActive,
-          autoReplyEnabled,
-          autoReplyMaxPerConversation: maxPer,
-          handoffAgentId: null,
-          embeddingsApiKey: null,
-        })
+        const catalog = await listProviderModels(provider, apiKeyPlain)
+        if (!catalog.some((row) => row.id === model)) {
+          return bad('Pick a model from the list this key returned.')
+        }
       } catch (err) {
         if (err instanceof AiError) {
           return NextResponse.json(
@@ -216,11 +209,12 @@ export async function POST(request: Request) {
     }
 
     if (existing) {
-      const { error: upErr } = await supabase
+      const { data: updated, error: upErr } = await supabase
         .from('ai_configs')
         .update(encryptedKey ? { ...shared, api_key: encryptedKey } : shared)
         .eq('account_id', accountId)
-      if (upErr) {
+        .select('id')
+      if (upErr || !updated?.length) {
         console.error('[ai/config POST] update error:', upErr)
         return NextResponse.json(
           { error: 'Failed to save AI configuration' },
@@ -228,13 +222,16 @@ export async function POST(request: Request) {
         )
       }
     } else {
-      const { error: insErr } = await supabase.from('ai_configs').insert({
-        account_id: accountId,
-        created_by: userId,
-        api_key: encryptedKey, // guaranteed non-null: rawKey required when no existing row
-        ...shared,
-      })
-      if (insErr) {
+      const { data: inserted, error: insErr } = await supabase
+        .from('ai_configs')
+        .insert({
+          account_id: accountId,
+          created_by: userId,
+          api_key: encryptedKey, // guaranteed non-null: rawKey required when no existing row
+          ...shared,
+        })
+        .select('id')
+      if (insErr || !inserted?.length) {
         console.error('[ai/config POST] insert error:', insErr)
         return NextResponse.json(
           { error: 'Failed to save AI configuration' },

@@ -27,7 +27,6 @@ import {
 import { SettingsPanelHead } from './settings-panel-head';
 import { AiKnowledgeCard } from './ai-knowledge';
 import {
-  AI_PROVIDER_DEFAULT_MODEL,
   AI_PROVIDER_KEY_PLACEHOLDER,
   AI_PROVIDER_LABEL,
 } from '@/lib/ai/defaults';
@@ -53,8 +52,12 @@ export function AiConfig() {
   const [removing, setRemoving] = useState(false);
 
   const [configured, setConfigured] = useState(false);
-  const [provider, setProvider] = useState<AiProvider>('openai');
-  const [model, setModel] = useState(AI_PROVIDER_DEFAULT_MODEL.openai);
+  const [provider, setProvider] = useState<AiProvider | ''>('');
+  const [savedProvider, setSavedProvider] = useState<AiProvider | ''>('');
+  const [model, setModel] = useState('');
+  const [savedModel, setSavedModel] = useState('');
+  const [models, setModels] = useState<{ id: string; label: string }[]>([]);
+  const [modelsReady, setModelsReady] = useState(false);
   const [apiKey, setApiKey] = useState('');
   const [keyEdited, setKeyEdited] = useState(false);
   const [showKey, setShowKey] = useState(false);
@@ -75,9 +78,10 @@ export function AiConfig() {
   // refetches instead of showing the previous account's config. Mirrors
   // the loadedAccountIdRef pattern in whatsapp-config.tsx.
   const loadedAccountIdRef = useRef<string | null>(null);
+  const keyRef = useRef('');
 
-  const fetchConfig = useCallback(async () => {
-    setLoading(true);
+  const fetchConfig = useCallback(async (opts?: { silent?: boolean }) => {
+    if (!opts?.silent) setLoading(true);
     try {
       const res = await fetch('/api/ai/config');
       const data = await res.json();
@@ -88,7 +92,13 @@ export function AiConfig() {
       if (data.configured) {
         setConfigured(true);
         setProvider(data.provider);
+        setSavedProvider(data.provider);
         setModel(data.model);
+        setSavedModel(data.model);
+        setModels(
+          data.model ? [{ id: data.model, label: data.model }] : [],
+        );
+        setModelsReady(true);
         setSystemPrompt(data.system_prompt ?? '');
         setIsActive(data.is_active);
         setAutoReplyEnabled(data.auto_reply_enabled);
@@ -97,6 +107,7 @@ export function AiConfig() {
         setHasStoredKey(Boolean(data.has_key));
         setApiKey(data.has_key ? MASKED_KEY : '');
         setKeyEdited(false);
+        keyRef.current = '';
         setHasStoredEmbeddingsKey(Boolean(data.has_embeddings_key));
         setEmbeddingsKey(data.has_embeddings_key ? MASKED_KEY : '');
         setEmbeddingsKeyEdited(false);
@@ -104,9 +115,9 @@ export function AiConfig() {
     } catch {
       toast.error(t('loadFailed'));
     } finally {
-      setLoading(false);
+      if (!opts?.silent) setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     if (!accountId || loadedAccountIdRef.current === accountId) return;
@@ -118,17 +129,31 @@ export function AiConfig() {
     void fetchAccountMembers().then(setMembers);
   }, [accountId, fetchConfig]);
 
-  // Swap the model default when the provider changes, unless the user
-  // typed a custom model.
   const handleProviderChange = (next: AiProvider) => {
     setProvider(next);
-    const isDefaultModel =
-      (Object.values(AI_PROVIDER_DEFAULT_MODEL) as string[]).includes(model) ||
-      model.trim() === '';
-    if (isDefaultModel) setModel(AI_PROVIDER_DEFAULT_MODEL[next]);
+    setModels([]);
+    setModelsReady(false);
+    if (next === savedProvider && savedModel) {
+      setModel(savedModel);
+      setModels([{ id: savedModel, label: savedModel }]);
+      setModelsReady(true);
+      setHasStoredKey(configured);
+      setApiKey(configured ? MASKED_KEY : '');
+      setKeyEdited(false);
+      return;
+    }
+    setModel('');
+    setHasStoredKey(false);
+    setApiKey('');
+    setKeyEdited(false);
   };
 
-  const keyPayload = () => (keyEdited ? apiKey.trim() : undefined);
+  const keyPayload = () => {
+    if (!keyEdited) return undefined;
+    const typed = apiKey.trim();
+    if (!typed || typed === MASKED_KEY) return keyRef.current || undefined;
+    return typed;
+  };
 
   // undefined = leave unchanged; '' typed = null (clear); text = set.
   const embeddingsKeyPayload = () =>
@@ -146,7 +171,18 @@ export function AiConfig() {
     handoff_agent_id: handoffAgentId || null,
   });
 
+  const usingStoredKey =
+    !keyEdited && hasStoredKey && provider !== '' && provider === savedProvider;
+
   const handleTest = async () => {
+    if (!provider) {
+      toast.error(t('missingProvider'));
+      return;
+    }
+    if (!usingStoredKey && !apiKey.trim()) {
+      toast.error(t('missingApiKey'));
+      return;
+    }
     setTesting(true);
     try {
       const res = await fetch('/api/ai/test', {
@@ -154,13 +190,56 @@ export function AiConfig() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           provider,
-          model: model.trim(),
-          api_key: keyPayload(),
+          api_key: usingStoredKey ? undefined : apiKey.trim(),
         }),
       });
       const data = await res.json();
-      if (res.ok) toast.success(t('testSuccess'));
-      else toast.error(data.error ?? t('testRejected'));
+      if (!res.ok) {
+        toast.error(data.error ?? t('testRejected'));
+        return;
+      }
+      const listed = Array.isArray(data.models)
+        ? data.models.flatMap((row: { id?: unknown; label?: unknown }) =>
+            typeof row?.id === 'string' && row.id.trim()
+              ? [{ id: row.id, label: typeof row.label === 'string' && row.label.trim() ? row.label : row.id }]
+              : [],
+          )
+        : [];
+      if (listed.length === 0) {
+        setModels([]);
+        setModelsReady(false);
+        setModel('');
+        toast.error(t('noModels'));
+        return;
+      }
+      setModels(listed);
+      setModelsReady(true);
+      const picked = listed.some((row: { id: string }) => row.id === model)
+        ? model
+        : listed[0].id;
+      setModel(picked);
+      const typedKey = usingStoredKey ? undefined : apiKey.trim() || keyRef.current;
+      const saved = await fetch('/api/ai/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...buildBody(),
+          model: picked,
+          api_key: typedKey,
+        }),
+      });
+      const savedBody = await saved.json().catch(() => null);
+      if (!saved.ok) {
+        toast.error(savedBody?.error ?? t('saveFailed'));
+        return;
+      }
+      toast.success(t('testSuccess', { count: listed.length }));
+      await fetchConfig({ silent: true });
+      // Refetch replaces the catalog with the single saved id. Put the
+      // list the key just returned back so the user can still pick.
+      setModels(listed);
+      setModel(picked);
+      setModelsReady(true);
     } catch {
       toast.error(t('testNetworkError'));
     } finally {
@@ -169,11 +248,23 @@ export function AiConfig() {
   };
 
   const handleSave = async () => {
+    if (!provider) {
+      toast.error(t('missingProvider'));
+      return;
+    }
     if (!model.trim()) {
       toast.error(t('missingModel'));
       return;
     }
+    if (!modelsReady) {
+      toast.error(t('testBeforeSave'));
+      return;
+    }
     if (!configured && !keyEdited) {
+      toast.error(t('missingApiKey'));
+      return;
+    }
+    if (provider !== savedProvider && !keyEdited) {
       toast.error(t('missingApiKey'));
       return;
     }
@@ -187,7 +278,7 @@ export function AiConfig() {
       const data = await res.json();
       if (res.ok) {
         toast.success(t('saveSuccess'));
-        await fetchConfig();
+        await fetchConfig({ silent: true });
       } else {
         toast.error(data.error ?? t('saveFailed'));
       }
@@ -205,9 +296,14 @@ export function AiConfig() {
       if (res.ok) {
         toast.success(t('removeSuccess'));
         setConfigured(false);
+        setSavedProvider('');
+        setSavedModel('');
         setHasStoredKey(false);
         setApiKey('');
         setKeyEdited(false);
+        setModels([]);
+        setModelsReady(false);
+        setModel('');
         setIsActive(false);
         setAutoReplyEnabled(false);
         setSystemPrompt('');
@@ -226,8 +322,7 @@ export function AiConfig() {
   if (loading || profileLoading) {
     return (
       <div className="flex items-center justify-center py-16 text-muted-foreground">
-        <Loader2 className="mr-2 h-4 w-4 animate-spin" /> {t('loadFailed')} {/* Re-using label or a global one, wait, loading is better. Let's use useTranslations from overview or just hardcode Loading... actually I should add loading to aiConfig */}
-        {/* Wait, I didn't add loading to aiConfig. I'll just use loading. */}
+        <Loader2 className="mr-2 h-4 w-4 animate-spin" /> {t('loading')}
       </div>
     );
   }
@@ -254,45 +349,32 @@ export function AiConfig() {
               <Sparkles className="h-4 w-4 text-primary" /> {t('providerAndKey')}
             </CardTitle>
             <CardDescription>
-              {t('encryptionNotice')}
+              {t('connectHint')} {t('encryptionNotice')}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label>{t('provider')}</Label>
-                <Select
-                  value={provider}
-                  onValueChange={(v) => handleProviderChange(v as AiProvider)}
-                  disabled={disabled}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {AI_PROVIDERS.map((id) => (
-                      <SelectItem key={id} value={id}>
-                        {AI_PROVIDER_LABEL[id]}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="ai-model">{t('model')}</Label>
-                <Input
-                  id="ai-model"
-                  value={model}
-                  onChange={(e) => setModel(e.target.value)}
-                  placeholder={AI_PROVIDER_DEFAULT_MODEL[provider]}
-                  disabled={disabled}
-                />
-              </div>
+            <div className="space-y-2">
+              <Label>{t('stepProvider')}</Label>
+              <Select
+                value={provider || undefined}
+                onValueChange={(v) => handleProviderChange(v as AiProvider)}
+                disabled={disabled}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={t('selectProvider')} />
+                </SelectTrigger>
+                <SelectContent>
+                  {AI_PROVIDERS.map((id) => (
+                    <SelectItem key={id} value={id}>
+                      {AI_PROVIDER_LABEL[id]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="ai-key">{t('apiKey')}</Label>
+              <Label htmlFor="ai-key">{t('stepKey')}</Label>
               <div className="flex gap-2">
                 <div className="relative flex-1">
                   <Input
@@ -300,17 +382,37 @@ export function AiConfig() {
                     type={showKey ? 'text' : 'password'}
                     value={apiKey}
                     onChange={(e) => {
-                      setApiKey(e.target.value);
+                      const next = e.target.value;
+                      if (next === apiKey) return;
+                      setApiKey(next);
+                      if (next === MASKED_KEY) return;
+                      if (!next.trim()) {
+                        setKeyEdited(false);
+                        keyRef.current = '';
+                        if (provider === savedProvider && savedModel) {
+                          setModel(savedModel);
+                          setModels([{ id: savedModel, label: savedModel }]);
+                          setModelsReady(true);
+                        }
+                        return;
+                      }
+                      keyRef.current = next.trim();
                       setKeyEdited(true);
+                      setModelsReady(false);
+                      setModels([]);
+                      setModel('');
                     }}
                     onFocus={() => {
-                      if (!keyEdited && hasStoredKey) {
+                      if (!keyEdited && hasStoredKey && provider === savedProvider) {
                         setApiKey('');
-                        setKeyEdited(true);
                       }
                     }}
-                    placeholder={AI_PROVIDER_KEY_PLACEHOLDER[provider]}
-                    disabled={disabled}
+                    placeholder={
+                      provider
+                        ? AI_PROVIDER_KEY_PLACEHOLDER[provider]
+                        : t('providerFirst')
+                    }
+                    disabled={disabled || !provider}
                     autoComplete="off"
                   />
                   <button
@@ -318,6 +420,7 @@ export function AiConfig() {
                     onClick={() => setShowKey((s) => !s)}
                     className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                     tabIndex={-1}
+                    disabled={!provider}
                   >
                     {showKey ? (
                       <EyeOff className="h-4 w-4" />
@@ -327,9 +430,10 @@ export function AiConfig() {
                   </button>
                 </div>
                 <Button
+                  type="button"
                   variant="outline"
                   onClick={handleTest}
-                  disabled={disabled || testing}
+                  disabled={disabled || testing || !provider || (!usingStoredKey && !apiKey.trim())}
                 >
                   {testing ? (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -339,6 +443,30 @@ export function AiConfig() {
                   {t('testKey')}
                 </Button>
               </div>
+              <p className="text-xs text-muted-foreground">{t('testHint')}</p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="ai-model">{t('stepModel')}</Label>
+              <Select
+                value={model || undefined}
+                onValueChange={(value) => setModel(value ?? "")}
+                disabled={disabled || !modelsReady || models.length === 0}
+              >
+                <SelectTrigger id="ai-model">
+                  <SelectValue placeholder={modelsReady ? t('pickModel') : t('modelLocked')} />
+                </SelectTrigger>
+                <SelectContent>
+                  {models.map((row) => (
+                    <SelectItem key={row.id} value={row.id}>
+                      {row.label === row.id ? row.id : `${row.label} (${row.id})`}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                {modelsReady ? t('modelHint', { count: models.length }) : t('modelLocked')}
+              </p>
             </div>
 
             <div className="space-y-2">
@@ -359,7 +487,6 @@ export function AiConfig() {
                 onFocus={() => {
                   if (!embeddingsKeyEdited && hasStoredEmbeddingsKey) {
                     setEmbeddingsKey('');
-                    setEmbeddingsKeyEdited(true);
                   }
                 }}
                 placeholder="sk-... (OpenAI)"

@@ -2,6 +2,11 @@
   "name": "proofline",
   "version": "0.1.0",
   "private": true,
+  "license": "UNLICENSED",
+  "author": "Arjun-Walia (https://github.com/Arjun-Walia)",
+  "contributors": [
+    "Abhishek (https://github.com/itsawesomeabhishek)"
+  ],
   "description": "Proofline — rank open deals from your records and approve who to contact first.",
   "engines": {
     "node": ">=20.0.0"
@@ -31,7 +36,8 @@
     "clsx": "^2.1.1",
     "date-fns": "^4.4.0",
     "lucide-react": "^1.30.0",
-    "next": "16.3.5",
+    "motion": "^13.5.0",
+    "next": "16.3.8",
     "next-intl": "^4.14.7",
     "opus-recorder": "^8.0.5",
     "react": "19.2.4",
@@ -48,7 +54,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "16.3.5",
+    "eslint-config-next": "16.3.8",
     "prettier": "^3.9.9",
     "prettier-plugin-tailwindcss": "^0.8.1",
     "tailwindcss": "^4",
@@ -57,14 +63,16 @@
   },
   "overrides": {
     "postcss": "^8.5.10",
-    "ip-address": "^10.3.1",
-    "fast-uri": "^3.1.6",
+    "ip-address": "^10.7.2",
+    "fast-uri": "^3.1.8",
+    "undici": "^7.30.0",
+    "express-rate-limit": "^8.7.0",
     "hono": "^4.13.5",
     "js-yaml": "^4.3.2",
     "nanoid": "^3.3.17",
     "@babel/core": "^7.29.6",
     "sharp": "^0.35.4",
-    "brace-expansion@^1.0.0": "^1.1.18",
-    "brace-expansion@^5.0.0": "^5.0.9"
+    "brace-expansion@^1.0.0": "^1.1.21",
+    "brace-expansion@^5.0.0": "^5.0.12"
   }
 }

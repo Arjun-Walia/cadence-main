@@ -1,9 +1,10 @@
-import { ImageResponse } from "next/og";
+import { readFile } from "node:fs/promises";
+import path from "node:path";
 
-const SIZES = {
-  "192": { px: 192, maskable: false },
-  "512": { px: 512, maskable: false },
-  maskable: { px: 512, maskable: true },
+const FILES = {
+  "192": "icon-192.png",
+  "512": "icon-512.png",
+  maskable: "icon-maskable.png",
 } as const;
 
 export async function GET(
@@ -11,30 +12,14 @@ export async function GET(
   context: { params: Promise<{ size: string }> },
 ) {
   const { size } = await context.params;
-  const spec = SIZES[size as keyof typeof SIZES];
-  if (!spec) return new Response("Not found", { status: 404 });
+  const file = FILES[size as keyof typeof FILES];
+  if (!file) return new Response("Not found", { status: 404 });
 
-  const fontSize = Math.round(spec.px * (spec.maskable ? 0.42 : 0.56));
-
-  return new ImageResponse(
-    (
-      <div
-        style={{
-          width: "100%",
-          height: "100%",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          background: "#000000",
-          color: "#ffffff",
-          fontSize,
-          fontWeight: 700,
-          letterSpacing: Math.round(spec.px * -0.04),
-        }}
-      >
-        C
-      </div>
-    ),
-    { width: spec.px, height: spec.px },
-  );
+  const bytes = await readFile(path.join(process.cwd(), "public", "brand", file));
+  return new Response(bytes, {
+    headers: {
+      "Content-Type": "image/png",
+      "Cache-Control": "public, max-age=86400",
+    },
+  });
 }

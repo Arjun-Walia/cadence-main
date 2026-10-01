@@ -8,6 +8,7 @@ import { ThemeProvider } from "@/hooks/use-theme";
 import { ThemedToaster } from "@/components/themed-toaster";
 import { InstallPrompt } from "@/components/pwa/install-prompt";
 import { RegisterServiceWorker } from "@/components/pwa/register-service-worker";
+import { PROOFLINE_NOTICE } from "@/lib/legal/trademark";
 import {
   DEFAULT_MODE,
   DEFAULT_THEME,
@@ -27,6 +28,16 @@ const sora = Sora({
   subsets: ["latin"],
 });
 
+function metadataBaseFromEnv(): URL | undefined {
+  const raw = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  if (!raw) return undefined;
+  try {
+    return new URL(raw);
+  } catch {
+    return undefined;
+  }
+}
+
 export const metadata: Metadata = {
   title: {
     default: "Proofline",
@@ -34,18 +45,43 @@ export const metadata: Metadata = {
   },
   description: "Rank open deals, see why each one matters, and approve who to contact first.",
   applicationName: "Proofline",
+  metadataBase: metadataBaseFromEnv(),
   appleWebApp: {
     capable: true,
     title: "Proofline",
     statusBarStyle: "black-translucent",
   },
   robots: {
-    index: false,
-    follow: false,
+    index: true,
+    follow: true,
   },
   icons: {
-    icon: [{ url: "/icon", type: "image/png" }],
-    apple: [{ url: "/apple-icon", sizes: "180x180", type: "image/png" }],
+    icon: [
+      { url: "/favicon.png", sizes: "32x32", type: "image/png" },
+      { url: "/brand/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/brand/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+  },
+  openGraph: {
+    title: "Proofline",
+    description: "Rank open deals, see why each one matters, and approve who to contact first.",
+    siteName: "Proofline",
+    type: "website",
+    images: [
+      {
+        url: "/og.png",
+        width: 1200,
+        height: 630,
+        alt: "Proofline. Decide who to contact first.",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Proofline",
+    description: "Rank open deals, see why each one matters, and approve who to contact first.",
+    images: ["/og.png"],
   },
   formatDetection: {
     email: false,
@@ -116,6 +152,7 @@ export default async function RootLayout({
     >
       <head>
         <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="trademark" content={PROOFLINE_NOTICE} />
         <Script
           id="theme-boot"
           strategy="beforeInteractive"
