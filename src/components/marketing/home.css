@@ -219,10 +219,10 @@
   font-weight: 700;
   letter-spacing: -0.06em;
 }
-.proofline-landing .brand svg {
-  width: 30px;
-  height: 30px;
-  color: var(--accent);
+.proofline-landing .brand .brand-mark {
+  width: 36px;
+  height: 24px;
+  object-fit: contain;
 }
 .proofline-landing header {
   position: sticky;
@@ -758,8 +758,7 @@
   font-size: 12px;
   margin-top: 4px;
 }
-.proofline-landing .quotes,
-.proofline-landing .pricing-grid {
+.proofline-landing .quotes {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 16px;
@@ -785,99 +784,6 @@
   color: var(--muted);
   font-size: 11px;
   font-weight: 400;
-}
-.proofline-landing .pricing-section {
-  padding-top: 0;
-}
-.proofline-landing .billing {
-  display: inline-flex;
-  border: 1px solid var(--line);
-  padding: 4px;
-  border-radius: 10px;
-  margin: 30px 0;
-  background: var(--soft);
-}
-.proofline-landing .billing button {
-  padding: 10px 18px;
-  border: 0;
-  background: transparent;
-  color: var(--muted);
-  border-radius: 7px;
-  font-size: 12px;
-  font-weight: 600;
-}
-.proofline-landing .billing button[aria-pressed='true'] {
-  background: var(--surface);
-  color: var(--ink);
-}
-.proofline-landing .pricing-grid {
-  text-align: left;
-}
-.proofline-landing .plan {
-  padding: 30px;
-}
-.proofline-landing .plan.featured {
-  border: 2px solid var(--accent);
-  background: var(--tint);
-}
-.proofline-landing .plan-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 10px;
-}
-.proofline-landing .plan-top h3 {
-  font-size: 19px;
-}
-.proofline-landing .badge {
-  font-size: 9px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  font-weight: 700;
-  background: var(--accent);
-  color: var(--bg);
-  border-radius: 4px;
-  padding: 4px 7px;
-}
-.proofline-landing .plan p {
-  font-size: 12px;
-  margin-top: 12px;
-}
-.proofline-landing .price {
-  font-size: 48px;
-  letter-spacing: -0.07em;
-  line-height: 1.2;
-  margin-top: 24px;
-}
-.proofline-landing .price small {
-  font:
-    12px var(--font-landing-body),
-    sans-serif;
-  letter-spacing: 0;
-  color: var(--muted);
-}
-.proofline-landing .plan .btn {
-  width: 100%;
-  margin-top: 24px;
-}
-.proofline-landing .plan ul {
-  list-style: none;
-  margin: 26px 0 0;
-  padding: 24px 0 0;
-  border-top: 1px solid var(--line);
-  font-size: 12px;
-  display: grid;
-  gap: 13px;
-}
-.proofline-landing .plan li {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-}
-.proofline-landing .plan li svg {
-  width: 15px;
-  height: 15px;
-  color: var(--green);
 }
 .proofline-landing .closing {
   position: relative;
@@ -1040,9 +946,6 @@
   }
   .proofline-landing .app-body {
     grid-template-columns: 1fr;
-  }
-  .proofline-landing .plan {
-    padding: 22px;
   }
   .proofline-landing .steps {
     gap: 28px;
@@ -1217,18 +1120,11 @@
   .proofline-landing .stat strong {
     font-size: 40px;
   }
-  .proofline-landing .quotes,
-  .proofline-landing .pricing-grid {
+  .proofline-landing .quotes {
     grid-template-columns: 1fr;
   }
   .proofline-landing .quote-text {
     font-size: 18px;
-  }
-  .proofline-landing .pricing-section {
-    padding-top: 0;
-  }
-  .proofline-landing .plan {
-    padding: 28px;
   }
   .proofline-landing .closing {
     padding: 52px 20px;

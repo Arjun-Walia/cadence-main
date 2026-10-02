@@ -6,9 +6,11 @@ import { cn } from "@/lib/utils";
 export function BrandMark({
   className,
   title = "Proofline",
+  priority = false,
 }: {
   className?: string;
   title?: string;
+  priority?: boolean;
 }) {
   return (
     <Image
@@ -16,6 +18,7 @@ export function BrandMark({
       alt={title}
       width={745}
       height={477}
+      priority={priority}
       className={cn("inline-block size-7 shrink-0 object-contain", className)}
     />
   );

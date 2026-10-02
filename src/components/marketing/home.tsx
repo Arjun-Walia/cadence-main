@@ -9,6 +9,7 @@ import {
 } from 'react';
 import Link from 'next/link';
 import { DM_Sans, Space_Grotesk } from 'next/font/google';
+import { BrandMark } from '@/components/layout/brand-mark';
 import { useTheme } from '@/hooks/use-theme';
 import {
   PROOFLINE_NOTICE,
@@ -29,7 +30,6 @@ const displayFont = Space_Grotesk({
 export function HomePage() {
   const { mode, toggleMode } = useTheme();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [yearly, setYearly] = useState(false);
   const [approved, setApproved] = useState(false);
   const [paused, setPaused] = useState(false);
   const [notice, setNotice] = useState('');
@@ -71,9 +71,6 @@ export function HomePage() {
         aria-hidden="true"
       >
         <defs>
-          <symbol id="mark" viewBox="0 0 24 24">
-            <path d="M4 19V5h7a5 5 0 0 1 0 10H8M8 9v10m4-12h5a3 3 0 0 1 0 6h-1" />
-          </symbol>
           <symbol id="arrow" viewBox="0 0 24 24">
             <path d="M5 12h14m-6-6 6 6-6 6" />
           </symbol>
@@ -118,10 +115,8 @@ export function HomePage() {
       <header>
         <div className="wrap nav-inner">
           <Link className="brand" href="#" aria-label="Proofline home">
-            <svg aria-hidden="true">
-              <use href="#mark" />
-            </svg>
-            proofline.
+            <BrandMark title="" priority className="brand-mark" />
+            Proofline
           </Link>
           <nav
             className={`nav-links ${menuOpen ? 'open' : ''}`}
@@ -132,7 +127,6 @@ export function HomePage() {
             <Link href="#features">Product</Link>
             <Link href="#how">How it works</Link>
             <Link href="#stories">Perspectives</Link>
-            <Link href="#pricing">Pricing</Link>
           </nav>
           <div className="nav-actions">
             <Link className="login" href="/login">
@@ -256,10 +250,8 @@ export function HomePage() {
                 <div className="app-body">
                   <aside className="sidebar" aria-label="Preview sidebar">
                     <div className="brand">
-                      <svg aria-hidden="true">
-                        <use href="#mark" />
-                      </svg>
-                      proofline.
+                      <BrandMark title="" className="brand-mark" />
+                      Proofline
                     </div>
                     <div className="side-link">
                       <svg aria-hidden="true">
@@ -670,196 +662,6 @@ export function HomePage() {
             verified customer quotes.
           </p>
         </section>
-        <section className="section wrap center pricing-section" id="pricing">
-          <div className="reveal">
-            <div className="eyebrow">Room to grow</div>
-            <h2>
-              A clear next step.
-              <br />
-              At every stage.
-            </h2>
-            <p className="sub">
-              Illustrative plans for this design preview. Pricing and
-              entitlements are not live offers.
-            </p>
-          </div>
-          <div className="billing" role="group" aria-label="Billing period">
-            <button
-              data-billing="monthly"
-              aria-pressed={!yearly}
-              onClick={() => setYearly(false)}
-            >
-              Monthly
-            </button>
-            <button
-              data-billing="yearly"
-              aria-pressed={yearly}
-              onClick={() => setYearly(true)}
-            >
-              Yearly · save 20%
-            </button>
-          </div>
-          <div className="pricing-grid" aria-live="polite">
-            <article className="card plan reveal">
-              <div className="plan-top">
-                <h3>Starter</h3>
-              </div>
-              <p>A little clarity for your first chapter.</p>
-              <div className="price number">
-                $
-                <span data-monthly="19">
-                  {yearly ? (19 * 0.8).toFixed(2) : 19}
-                </span>
-                <small> / month</small>
-              </div>
-              <p className="billing-note">
-                {yearly
-                  ? `${(19 * 0.8 * 12).toFixed(2)} USD billed yearly`
-                  : 'Billed monthly'}{' '}
-                · example pricing
-              </p>
-              <Link className="btn" href="/signup">
-                Explore Starter{' '}
-                <svg aria-hidden="true">
-                  <use href="#arrow" />
-                </svg>
-              </Link>
-              <ul>
-                <li>
-                  <svg aria-hidden="true">
-                    <use href="#check" />
-                  </svg>
-                  1 shared workspace
-                </li>
-                <li>
-                  <svg aria-hidden="true">
-                    <use href="#check" />
-                  </svg>
-                  Conversation inbox
-                </li>
-                <li>
-                  <svg aria-hidden="true">
-                    <use href="#check" />
-                  </svg>
-                  Deal pipeline
-                </li>
-                <li>
-                  <svg aria-hidden="true">
-                    <use href="#check" />
-                  </svg>
-                  Suggested next steps
-                </li>
-              </ul>
-            </article>
-            <article className="card plan featured reveal">
-              <div className="plan-top">
-                <h3>Team</h3>
-                <span className="badge">The sweet spot</span>
-              </div>
-              <p>More context for your next chapter.</p>
-              <div className="price number">
-                $
-                <span data-monthly="49">
-                  {yearly ? (49 * 0.8).toFixed(2) : 49}
-                </span>
-                <small> / month</small>
-              </div>
-              <p className="billing-note">
-                {yearly
-                  ? `${(49 * 0.8 * 12).toFixed(2)} USD billed yearly`
-                  : 'Billed monthly'}{' '}
-                · example pricing
-              </p>
-              <Link className="btn primary magnetic" href="/signup">
-                Explore Team{' '}
-                <svg aria-hidden="true">
-                  <use href="#arrow" />
-                </svg>
-              </Link>
-              <ul>
-                <li>
-                  <svg aria-hidden="true">
-                    <use href="#check" />
-                  </svg>
-                  Everything in Starter
-                </li>
-                <li>
-                  <svg aria-hidden="true">
-                    <use href="#check" />
-                  </svg>
-                  Team collaboration
-                </li>
-                <li>
-                  <svg aria-hidden="true">
-                    <use href="#check" />
-                  </svg>
-                  Flows and automations
-                </li>
-                <li>
-                  <svg aria-hidden="true">
-                    <use href="#check" />
-                  </svg>
-                  Bring-your-own-key AI
-                </li>
-              </ul>
-            </article>
-            <article className="card plan reveal">
-              <div className="plan-top">
-                <h3>Scale</h3>
-              </div>
-              <p>A wider view as your world grows.</p>
-              <div className="price number">
-                $
-                <span data-monthly="99">
-                  {yearly ? (99 * 0.8).toFixed(2) : 99}
-                </span>
-                <small> / month</small>
-              </div>
-              <p className="billing-note">
-                {yearly
-                  ? `${(99 * 0.8 * 12).toFixed(2)} USD billed yearly`
-                  : 'Billed monthly'}{' '}
-                · example pricing
-              </p>
-              <Link className="btn" href="/signup">
-                Explore Scale{' '}
-                <svg aria-hidden="true">
-                  <use href="#arrow" />
-                </svg>
-              </Link>
-              <ul>
-                <li>
-                  <svg aria-hidden="true">
-                    <use href="#check" />
-                  </svg>
-                  Everything in Team
-                </li>
-                <li>
-                  <svg aria-hidden="true">
-                    <use href="#check" />
-                  </svg>
-                  Advanced workflows
-                </li>
-                <li>
-                  <svg aria-hidden="true">
-                    <use href="#check" />
-                  </svg>
-                  API integrations
-                </li>
-                <li>
-                  <svg aria-hidden="true">
-                    <use href="#check" />
-                  </svg>
-                  Workspace administration
-                </li>
-              </ul>
-            </article>
-          </div>
-          <p className="note">
-            Sample USD pricing. Provider and messaging costs are separate. Final
-            plans require confirmation.
-          </p>
-        </section>
         <section className="wrap">
           <div className="closing reveal">
             <div className="eyebrow">Your next chapter starts with clarity</div>
@@ -884,10 +686,8 @@ export function HomePage() {
         <div className="footer-top">
           <div>
             <Link className="brand" href="#">
-              <svg aria-hidden="true">
-                <use href="#mark" />
-              </svg>
-              proofline.
+              <BrandMark title="" className="brand-mark" />
+              Proofline
             </Link>
             <p>
               Good relationships. Clear next steps.
@@ -899,7 +699,6 @@ export function HomePage() {
               <strong>PRODUCT</strong>
               <Link href="#features">Features</Link>
               <Link href="#how">How it works</Link>
-              <Link href="#pricing">Sample plans</Link>
             </div>
             <div>
               <strong>WORKSPACE</strong>
