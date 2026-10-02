@@ -1,13 +1,13 @@
-import type { Metadata } from "next";
+import type { Metadata } from 'next';
 
-import { HomePage } from "@/components/marketing/home";
+import { HomePage } from '@/components/marketing/home';
 
 export const metadata: Metadata = {
   title: {
-    absolute: "Proofline — decide who to contact first",
+    absolute: 'Proofline — Good relationships. Clear next steps.',
   },
   description:
-    "Rank open deals from your own records, see why each one matters, and approve the next step.",
+    'Rank open deals from your own records, see why each one matters, and approve the next step.',
   robots: {
     index: true,
     follow: true,
